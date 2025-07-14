@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Juego Matemático Divertido</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+            margin-top: 50px;
+            animation: backgroundAnimation 10s infinite alternate;
+        }
+
+        @keyframes backgroundAnimation {
+            0% { background: linear-gradient(135deg, #74ebd5, #ACB6E5); }
+            100% { background: linear-gradient(135deg, #ACB6E5, #74ebd5); }
+        }
+
+        h1 {
+            color: #333;
+            font-size: 36px;
+            animation: title-bounce 2s infinite;
+        }
+
+        @keyframes title-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .game-container {
+            background-color: #fff;
+            display: inline-block;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+
+        input {
+            padding: 10px;
+            width: 100px;
+            text-align: center;
+            font-size: 20px;
+            border: 2px solid #666;
+            border-radius: 10px;
+        }
+
+        button {
+            padding: 10px 30px;
+            font-size: 18px;
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #333;
+            height: 40px;
+        }
+
+        .level {
+            margin-bottom: 20px;
+            font-size: 22px;
+            color: #333;
+        }
+
+        .problem {
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+
+        .win-animation {
+            font-size: 24px;
+            color: gold;
+            animation: flash 0.5s alternate infinite;
+        }
+
+        @keyframes flash {
+            0% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+
+<audio id="correct-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_1f4371f3db.mp3"></audio>
+<audio id="wrong-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_59f29eae0d.mp3"></audio>
+
+<div class="game-container">
+    <h1>🎲 Matemáticas Divertidas 🎲</h1>
+    <div class="level">Nivel: 1</div>
+    <div class="problem"></div>
+    <input type="number" id="answer" placeholder="Respuesta">
+    <br>
+    <button onclick="checkAnswer()">Verificar</button>
+    <div class="result"></div>
+</div>
+
+<script>
+    let level = 1;
+    let num1, num2, operation, correctAnswer;
+
+    function generateProblem() {
+        let maxNum = Math.floor(level / 10) * 10 + 10;
+        num1 = Math.floor(Math.random() * maxNum);
+        num2 = Math.floor(Math.random() * maxNum);
+        
+        if (level <= 10) {
+            operation = '+';
+            correctAnswer = num1 + num2;
+        } else if (level <= 21) {
+            operation = '*';
+            correctAnswer = num1 * num2;
+        } else if (level <= 32) {
+            operation = '-';
+            correctAnswer = num1 - num2;
+        } else if (level <= 1000) {
+            operation = '/';
+            num2 = num2 === 0 ? 1 : num2;
+            num1 = num1 - (num1 % num2);
+            correctAnswer = num1 / num2;
+        }
+
+        document.querySelector('.problem').textContent = `${num1} ${operation} ${num2} = ?`;
+        document.querySelector('.level').textContent = `Nivel: ${level}`;
+        document.getElementById('answer').value = '';
+        document.querySelector('.result').innerHTML = '';
+    }
+
+    function checkAnswer() {
+        const userAnswer = Number(document.getElementById('answer').value);
+        const correctSound = document.getElementById('correct-sound');
+        const wrongSound = document.getElementById('wrong-sound');
+
+        if (userAnswer === correctAnswer) {
+            correctSound.play();
+            level++;
+            document.querySelector('.result').innerHTML = '<div class="win-animation">🎉 ¡Correcto! 🎉</div>';
+        } else {
+            wrongSound.play();
+            document.querySelector('.result').innerHTML = '<div style="color:red;">❌ Incorrecto, intenta de nuevo.</div>';
+        }
+        setTimeout(generateProblem, 1000);
+    }
+
+    generateProblem();
+</script>
+
+</body>
+</html>
