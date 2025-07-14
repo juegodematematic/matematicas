@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Juego Matemático Mejorado</title>
+<style>
+  body {
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    text-align: center;
+    background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+    margin: 0; padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: backgroundAnimation 10s infinite alternate;
+  }
+  @keyframes backgroundAnimation {
+    0% { background: linear-gradient(135deg, #74ebd5, #ACB6E5); }
+    100% { background: linear-gradient(135deg, #ACB6E5, #74ebd5); }
+  }
+  .game-container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.25);
+    width: 350px;
+    position: relative;
+  }
+  h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+    animation: title-bounce 2s infinite;
+    color: #333;
+  }
+  @keyframes title-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .level, .lives, .timer {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #555;
+  }
+  .problem {
+    font-size: 28px;
+    margin: 20px 0 10px;
+  }
+  input {
+    padding: 10px;
+    width: 100px;
+    font-size: 20px;
+    text-align: center;
+    border-radius: 10px;
+    border: 2px solid #666;
+  }
+  button {
+    margin-top: 15px;
+    padding: 10px 30px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  button:hover {
+    background-color: #45a049;
+  }
+  .result {
+    height: 40px;
+    margin-top: 15px;
+    font-size: 20px;
+    min-height: 40px;
+  }
+  .win-animation {
+    font-size: 24px;
+    color: gold;
+    animation: flash 0.5s alternate infinite;
+  }
+  @keyframes flash {
+    0% { opacity: 1; }
+    100% { opacity: 0.3; }
+  }
+  /* Animación nivel 100 */
+  .level-100 {
+    font-size: 30px;
+    font-weight: bold;
+    color: #d35400;
+    animation: glow 1s infinite alternate;
+    margin-bottom: 20px;
+  }
+  @keyframes glow {
+    from { text-shadow: 0 0 5px #f39c12; }
+    to { text-shadow: 0 0 20px #f1c40f; }
+  }
+
+  /* Pantalla Game Over */
+  .game-over-screen {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background-color: rgba(0,0,0,0.85);
+    color: white;
+    font-size: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 9999;
+    animation: fadeIn 1.5s forwards;
+  }
+  .game-over-screen button {
+    font-size: 24px;
+    margin-top: 20px;
+    background-color: #e74c3c;
+  }
+  @keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+</style>
+</head>
+<body>
+
+<audio id="correct-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_1f4371f3db.mp3"></audio>
+<audio id="wrong-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_59f29eae0d.mp3"></audio>
+<audio id="gameover-sound" src="https://cdn.pixabay.com/audio/2021/09/15/audio_750f3f2f1f.mp3"></audio>
+<audio id="levelup-sound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_4e7b72d7de.mp3"></audio>
+
+<div class="game-container" id="game-container">
+  <h1>🎲 Matemáticas Divertidas 🎲</h1>
+  <div class="level" id="levelDisplay">Nivel: 1</div>
+  <div class="lives" id="livesDisplay">Vidas: ❤️❤️❤️</div>
+  <div class="timer" id="timerDisplay">Tiempo: 10s</div>
+  <div class="problem" id="problem"></div>
+  <input type="number" id="answer" placeholder="Respuesta" />
+  <br />
+  <button onclick="checkAnswer()">Verificar</button>
+  <div class="result" id="result"></div>
+</div>
+
+<div id="gameOverScreen" class="game-over-screen" style="display:none;">
+  <div>GAME OVER 😞</div>
+  <button onclick="restartGame()">Volver a jugar</button>
+</div>
+
+<script>
+  let level = 1;
+  let lives = 3;
+  let timeLeft = 10;
+  let timerId;
+  let num1, num2, operation, correctAnswer;
+
+  const levelDisplay = document.getElementById('levelDisplay');
+  const livesDisplay = document.getElementById('livesDisplay');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const problemDisplay = document.getElementById('problem');
+  const answerInput = document.getElementById('answer');
+  const resultDisplay = document.getElementById('result');
+  const gameContainer = document.getElementById('game-container');
+  const gameOverScreen = document.getElementById('gameOverScreen');
+
+  const correctSound = document.getElementById('correct-sound');
+  const wrongSound = document.getElementById('wrong-sound');
+  const gameoverSound = document.getElementById('gameover-sound');
+  const levelupSound = document.getElementById('levelup-sound');
+
+  function updateLivesDisplay() {
+    let hearts = '❤️'.repeat(lives) + '🤍'.repeat(3 - lives);
+    livesDisplay.textContent = 'Vidas: ' + hearts;
+  }
+
+  function generateProblem() {
+    clearInterval(timerId);
+    timeLeft = 10;
+    timerDisplay.textContent = `Tiempo: ${timeLeft}s`;
+    timerId = setInterval(countdown, 1000);
+
+    let maxNum = Math.floor(level / 10) * 10 + 10;
+    if (maxNum > 100) maxNum = 100 + (level - 100); // Subir dificultad más lento después de 100
+
+    num1 = Math.floor(Math.random() * maxNum);
+    num2 = Math.floor(Math.random() * maxNum);
+
+    if (level <= 10) {
+      operation = '+';
+      correctAnswer = num1 + num2;
+    } else if (level <= 21) {
+      operation = '*';
+      correctAnswer = num1 * num2;
+    } else if (level <= 32) {
+      operation = '-';
+      correctAnswer = num1 - num2;
+    } else if (level <= 1000) {
+      operation = '/';
+      num2 = num2 === 0 ? 1 : num2;
+      num1 = num1 - (num1 % num2);
+      correctAnswer = num1 / num2;
+    }
+
+    problemDisplay.textContent = `${num1} ${operation} ${num2} = ?`;
+    levelDisplay.textContent = `Nivel: ${level}`;
+
+    if (level === 100) {
+      levelDisplay.classList.add('level-100');
+      levelupSound.play();
+      setTimeout(() => {
+        levelDisplay.classList.remove('level-100');
+      }, 5000);
+    }
+
+    answerInput.value = '';
+    resultDisplay.textContent = '';
+    answerInput.focus();
+  }
+
+  function countdown() {
+    timeLeft--;
+    timerDisplay.textContent = `Tiempo: ${timeLeft}s`;
+    if (timeLeft <= 0) {
+      clearInterval(timerId);
+      loseLife('Tiempo agotado!');
+    }
+  }
+
+  function checkAnswer() {
+    clearInterval(timerId);
+    const userAnswer = Number(answerInput.value);
+
+    if (userAnswer === correctAnswer) {
+      correctSound.play();
+      level++;
+      resultDisplay.innerHTML = '<div class="win-animation">🎉 ¡Correcto! 🎉</div>';
+      setTimeout(() => {
+        generateProblem();
+      }, 1500);
+    } else {
+      loseLife('❌ Incorrecto, intenta de nuevo.');
+    }
+  }
+
+  function loseLife(message) {
+    wrongSound.play();
+    lives--;
+    updateLivesDisplay();
+    resultDisplay.textContent = message;
+
+    if (lives <= 0) {
+      gameOver();
+    } else {
+      setTimeout(() => {
+        generateProblem();
+      }, 1500);
+    }
+  }
+
+  function gameOver() {
+    gameoverSound.play();
+    gameContainer.style.display = 'none';
+    gameOverScreen.style.display = 'flex';
+  }
+
+  function restartGame() {
+    level = 1;
+    lives = 3;
+    updateLivesDisplay();
+    gameOverScreen.style.display = 'none';
+    gameContainer.style.display = 'block';
+    generateProblem();
+  }
+
+  updateLivesDisplay();
+  generateProblem();
+</script>
+
+</body>
+</html>
