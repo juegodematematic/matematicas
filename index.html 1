@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Juego Matemático</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin-top: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        .game-container {
+            background-color: #fff;
+            display: inline-block;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input {
+            padding: 10px;
+            width: 80px;
+            text-align: center;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .level {
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Juego de Matemáticas</h1>
+    <div class="level">Nivel: 1</div>
+    <div class="problem"></div>
+    <input type="number" id="answer" placeholder="Tu respuesta">
+    <br>
+    <button onclick="checkAnswer()">Verificar</button>
+    <div class="result"></div>
+</div>
+
+<script>
+    let level = 1;
+    let num1, num2, operation, correctAnswer;
+
+    function generateProblem() {
+        let maxNum = Math.floor(level / 10) * 10 + 10;
+        num1 = Math.floor(Math.random() * maxNum);
+        num2 = Math.floor(Math.random() * maxNum);
+        
+        if (level <= 10) {
+            operation = '+';
+            correctAnswer = num1 + num2;
+        } else if (level <= 21) {
+            operation = '*';
+            correctAnswer = num1 * num2;
+        } else if (level <= 32) {
+            operation = '-';
+            correctAnswer = num1 - num2;
+        } else if (level <= 1000) {
+            operation = '/';
+            num2 = num2 === 0 ? 1 : num2;  // Evitar división por cero
+            num1 = num1 - (num1 % num2);   // Asegurar que la división sea exacta
+            correctAnswer = num1 / num2;
+        }
+
+        document.querySelector('.problem').textContent = `${num1} ${operation} ${num2} = ?`;
+        document.querySelector('.level').textContent = `Nivel: ${level}`;
+        document.getElementById('answer').value = '';
+    }
+
+    function checkAnswer() {
+        const userAnswer = Number(document.getElementById('answer').value);
+        if (userAnswer === correctAnswer) {
+            level++;
+            document.querySelector('.result').textContent = '✅ ¡Correcto! Avanzas al siguiente nivel.';
+        } else {
+            document.querySelector('.result').textContent = '❌ Incorrecto. Intenta de nuevo.';
+        }
+        generateProblem();
+    }
+
+    generateProblem();
+</script>
+
+</body>
+</html>
